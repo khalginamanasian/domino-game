@@ -15,9 +15,7 @@ body {
 
 h1 { margin-top: 20px; }
 
-#menu {
-  margin-top: 50px;
-}
+#menu { margin-top: 50px; }
 
 button {
   padding: 12px 25px;
@@ -81,7 +79,8 @@ button {
 <div id="game" style="display:none;">
   <div id="info">
     ⏱ Zeit: <span id="time">0</span>s |
-    ⭐ Punkte: <span id="score">0</span>
+    ⭐ Punkte: <span id="score">0</span> |
+    ❌ Fehler: <span id="errors">0</span>
   </div>
 
   <div class="container" id="cards"></div>
@@ -124,6 +123,7 @@ let cards = [
 let selected = [];
 let score = 0;
 let time = 0;
+let errors = 0;
 let timer;
 let matchedPairs = 0;
 
@@ -147,31 +147,37 @@ function shuffle(array) {
   return array.sort(() => Math.random() - 0.5);
 }
 
-function startGame() {
-  document.getElementById("menu").style.display = "none";
-  document.getElementById("game").style.display = "block";
-
+function resetGameState() {
   score = 0;
   time = 0;
+  errors = 0;
   matchedPairs = 0;
 
   document.getElementById("score").innerText = score;
   document.getElementById("time").innerText = time;
+  document.getElementById("errors").innerText = errors;
 
+  clearInterval(timer);
   timer = setInterval(() => {
     time++;
     document.getElementById("time").innerText = time;
   }, 1000);
+}
 
+function startGame() {
+  document.getElementById("menu").style.display = "none";
+  document.getElementById("game").style.display = "block";
+
+  resetGameState();
   render();
 }
 
 function render() {
+  resetGameState();
+
   let container = document.getElementById("cards");
   container.innerHTML = "";
   selected = [];
-
-  matchedPairs = 0; // 🔥 ФИКС БАГА
 
   shuffle(cards).forEach(card => {
     let div = document.createElement("div");
@@ -214,7 +220,10 @@ function selectCard(el, card) {
       playSound("wrong");
 
       score -= 2;
+      errors++; // 🔥 счетчик ошибок
+
       document.getElementById("score").innerText = score;
+      document.getElementById("errors").innerText = errors;
 
       setTimeout(() => {
         a.el.classList.remove("selected");
