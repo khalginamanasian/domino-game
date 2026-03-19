@@ -1,115 +1,136 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Psychiatrie – Begriffsdomino</title>
-  <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-      background: #f8f9fa;
-      margin: 0;
-      padding: 12px;
-      touch-action: manipulation;
-    }
-    h1 {
-      text-align: center;
-      color: #2c3e50;
-      margin: 10px 0;
-      font-size: 1.4em;
-    }
-    #board {
-      min-height: 160px;
-      border: 2px dashed #aaa;
-      border-radius: 10px;
-      margin: 12px 0;
-      padding: 12px;
-      background: white;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      align-content: flex-start;
-    }
-    .card {
-      width: 110px;
-      height: 150px;
-      background: #fff;
-      border: 2px solid #3498db;
-      border-radius: 10px;
-      overflow: hidden;
-      box-shadow: 0 3px 8px rgba(0,0,0,0.15);
-      display: flex;
-      flex-direction: column;
-      font-size: 0.9em;
-      user-select: none;
-      touch-action: manipulation;
-    }
-    .half {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 6px;
-      text-align: center;
-      line-height: 1.3;
-    }
-    .top    { background: #3498db; color: white; font-weight: bold; }
-    .bottom { background: #ecf0f1; color: #2c3e50; }
-    .correct { border-color: #27ae60 !important; box-shadow: 0 0 0 3px #27ae60; }
-    .wrong   { border-color: #e74c3c !important; }
-    #stock {
-      margin: 16px 0;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      justify-content: center;
-    }
-    button {
-      padding: 10px 18px;
-      font-size: 1em;
-      margin: 8px;
-      border: none;
-      border-radius: 8px;
-      background: #27ae60;
-      color: white;
-      font-weight: bold;
-    }
-    button:active { background: #219653; }
-    #message {
-      text-align: center;
-      font-weight: bold;
-      min-height: 1.4em;
-      margin: 10px 0;
-      color: #27ae60;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Psychiatrie Domino</title>
+
+<style>
+body {
+  font-family: -apple-system;
+  text-align: center;
+  background: #f0f4f8;
+}
+
+h2 { margin-top: 20px; }
+
+.container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.card {
+  width: 40%;
+  margin: 10px;
+  padding: 20px;
+  font-size: 18px;
+  border-radius: 15px;
+  background: white;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  cursor: pointer;
+}
+
+.selected { background: #cce5ff; }
+.correct { background: #b2f2bb; }
+
+button {
+  margin-top: 20px;
+  padding: 10px 20px;
+  font-size: 16px;
+  border-radius: 10px;
+}
+</style>
 </head>
+
 <body>
 
-<h1>Psychiatrie – Begriffsdomino</h1>
-<p style="text-align:center; color:#555; margin:8px 0;">Ziehe die Karten so, dass Begriff und Erklärung zusammenpassen</p>
+<h2>🧠 Psychiatrie Domino</h2>
+<p>Tippe zwei passende Karten</p>
 
-<div id="board">Lege hier die erste Karte hin …</div>
-<div id="message"></div>
-
-<div id="stock"></div>
-
-<button onclick="resetGame()">Neues Spiel</button>
+<div class="container" id="game"></div>
+<button onclick="render()">🔄 Neu mischen</button>
 
 <script>
-// ────────────────────────────────────────────────
-//                DOMINO-DATEN
-// ────────────────────────────────────────────────
-const pairs = [
-  ["Psychiatrie",                     "Medizinisches Fachgebiet, das sich mit der Diagnostik, Behandlung und Prävention psychischer Erkrankungen beschäftigt"],
-  ["Depression",                      "Affektive Störung – gekennzeichnet durch anhaltend gedrückte Stimmung, Antriebslosigkeit und Interessenverlust"],
-  ["Schizophrenie",                   "Psychotische Störung mit Halluzinationen, Wahnvorstellungen, desorganisiertem Denken und negativen Symptomen"],
-  ["Bipolare Störung",                "Affektive Erkrankung mit Wechsel zwischen manischen/hippomanischen und depressiven Phasen"],
-  ["Angststörung",                    "Gruppe von Erkrankungen mit übermäßiger Angst und Vermeidungsverhalten (z. B. Panikstörung, generalisierte Angststörung)"],
-  ["Zwangsstörung",                   "Störung mit wiederkehrenden Zwangsgedanken und/oder Zwangshandlungen"],
-  ["PTBS",                            "Posttraumatische Belastungsstörung – nach extrem belastendem Ereignis mit Wiedererleben, Vermeidung, Übererregung"],
-  ["Persönlichkeitsstörung",          "Tiefgreifendes, anhaltendes Verhaltens- und Erlebensmuster, das von kulturellen Normen abweicht (z. B. Borderline, narzisstisch)"],
-  ["Demenz",                          "Erworbene, meist fortschreitende Abnahme kognitiver Fähigkeiten (z. B. Alzheimer-Demenz)"],
-  ["Delir",                           "Akuter Verwirrtheitszustand mit Bewusstseinsstörung, Aufmerksamkeitsstörung und wechselnder Symptomatik"],
-  ["Psychotherapie",                  "Geplante, zielgerichtete Behandlung psychischer Störungen durch psychologische Methoden"],
-  ["Antidepressiva",                  "Medikament
+let cards = [
+  {id:1, text:"Psychiatrie", match:1},
+  {id:2, text:"medizinisches Fachgebiet für psychische Erkrankungen", match:1},
+
+  {id:3, text:"Depression", match:2},
+  {id:4, text:"affektive Störung mit gedrückter Stimmung", match:2},
+
+  {id:5, text:"Angststörung", match:3},
+  {id:6, text:"übermäßige Angst ohne reale Gefahr", match:3},
+
+  {id:7, text:"Schizophrenie", match:4},
+  {id:8, text:"Wahn und Halluzinationen", match:4},
+
+  {id:9, text:"Demenz", match:5},
+  {id:10, text:"Abbau kognitiver Fähigkeiten", match:5},
+
+  {id:11, text:"Wahn", match:6},
+  {id:12, text:"falsche Überzeugung, nicht korrigierbar", match:6},
+
+  {id:13, text:"Halluzination", match:7},
+  {id:14, text:"Wahrnehmung ohne äußeren Reiz", match:7},
+
+  {id:15, text:"Zwangsstörung", match:8},
+  {id:16, text:"wiederkehrende Gedanken oder Handlungen", match:8},
+
+  {id:17, text:"Sucht", match:9},
+  {id:18, text:"Abhängigkeit von Substanzen oder Verhalten", match:9},
+
+  {id:19, text:"Suizidalität", match:10},
+  {id:20, text:"Gedanken oder Absichten, sich zu töten", match:10}
+];
+
+let selected = [];
+
+function shuffle(array) {
+  return array.sort(() => Math.random() - 0.5);
+}
+
+function render() {
+  let game = document.getElementById("game");
+  game.innerHTML = "";
+  selected = [];
+
+  shuffle(cards).forEach(card => {
+    let div = document.createElement("div");
+    div.className = "card";
+    div.innerText = card.text;
+    div.onclick = () => selectCard(div, card);
+    game.appendChild(div);
+  });
+}
+
+function selectCard(el, card) {
+  if (selected.length < 2 && !el.classList.contains("correct")) {
+    el.classList.add("selected");
+    selected.push({el, card});
+  }
+
+  if (selected.length === 2) {
+    let [a, b] = selected;
+
+    if (a.card.match === b.card.match && a.card.id !== b.card.id) {
+      a.el.classList.remove("selected");
+      b.el.classList.remove("selected");
+      a.el.classList.add("correct");
+      b.el.classList.add("correct");
+    } else {
+      setTimeout(() => {
+        a.el.classList.remove("selected");
+        b.el.classList.remove("selected");
+      }, 700);
+    }
+
+    selected = [];
+  }
+}
+
+render();
+</script>
+
+</body>
+</html>
