@@ -38,7 +38,7 @@ button {
   width: 40%;
   margin: 10px;
   padding: 20px;
-  font-size: 18px;
+  font-size: 17px;
   border-radius: 15px;
   background: white;
   box-shadow: 0 4px 10px rgba(0,0,0,0.1);
@@ -83,28 +83,28 @@ let cards = [
   {id:2, text:"medizinisches Fachgebiet für psychische Erkrankungen", match:1},
 
   {id:3, text:"Depression", match:2},
-  {id:4, text:"affektive Störung mit gedrückter Stimmung", match:2},
+  {id:4, text:"anhaltende Traurigkeit und Antriebslosigkeit", match:2},
 
   {id:5, text:"Angststörung", match:3},
-  {id:6, text:"übermäßige Angst ohne reale Gefahr", match:3},
+  {id:6, text:"starke Angst ohne reale Gefahr", match:3},
 
   {id:7, text:"Schizophrenie", match:4},
-  {id:8, text:"Wahn und Halluzinationen", match:4},
+  {id:8, text:"Wahnvorstellungen und Halluzinationen", match:4},
 
   {id:9, text:"Demenz", match:5},
-  {id:10, text:"Abbau kognitiver Fähigkeiten", match:5},
+  {id:10, text:"Abbau von Gedächtnis und Orientierung", match:5},
 
   {id:11, text:"Wahn", match:6},
-  {id:12, text:"falsche Überzeugung", match:6},
+  {id:12, text:"feste falsche Überzeugung, nicht korrigierbar", match:6},
 
   {id:13, text:"Halluzination", match:7},
-  {id:14, text:"Wahrnehmung ohne Reiz", match:7},
+  {id:14, text:"Wahrnehmung ohne äußeren Reiz", match:7},
 
   {id:15, text:"Zwangsstörung", match:8},
-  {id:16, text:"wiederkehrende Gedanken", match:8},
+  {id:16, text:"wiederkehrende Gedanken oder Handlungen", match:8},
 
   {id:17, text:"Sucht", match:9},
-  {id:18, text:"Abhängigkeit", match:9},
+  {id:18, text:"Abhängigkeit von Substanzen oder Verhalten", match:9},
 
   {id:19, text:"Suizidalität", match:10},
   {id:20, text:"Gedanken an Selbsttötung", match:10}
@@ -115,6 +115,22 @@ let score = 0;
 let time = 0;
 let timer;
 let matchedPairs = 0;
+
+function playSound(type) {
+  let ctx = new (window.AudioContext || window.webkitAudioContext)();
+  let osc = ctx.createOscillator();
+  let gain = ctx.createGain();
+
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+
+  if (type === "correct") osc.frequency.value = 600;
+  if (type === "wrong") osc.frequency.value = 200;
+  if (type === "win") osc.frequency.value = 800;
+
+  osc.start();
+  gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.5);
+}
 
 function shuffle(array) {
   return array.sort(() => Math.random() - 0.5);
@@ -168,6 +184,8 @@ function selectCard(el, card) {
       a.el.classList.add("correct");
       b.el.classList.add("correct");
 
+      playSound("correct");
+
       score += 10;
       matchedPairs++;
 
@@ -176,9 +194,12 @@ function selectCard(el, card) {
       if (matchedPairs === cards.length / 2) {
         clearInterval(timer);
         document.getElementById("confetti").style.display = "block";
+        playSound("win");
       }
 
     } else {
+      playSound("wrong");
+
       score -= 2;
       document.getElementById("score").innerText = score;
 
